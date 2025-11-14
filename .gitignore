@@ -1,0 +1,15 @@
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+
+# Logs and outputs
+logs/
+outputs/
+
+# Downloaded models (assuming not part of source)
+models/ldm/text2img-large/
+
+# Potentially vendored source that should not be tracked
+src/
