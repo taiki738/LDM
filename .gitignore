@@ -13,3 +13,5 @@ models/ldm/text2img-large/
 
 # Potentially vendored source that should not be tracked
 src/
+\n# Ignore model checkpoints
+**/*.ckpt
