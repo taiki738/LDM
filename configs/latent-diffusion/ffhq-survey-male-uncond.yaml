@@ -1,0 +1,93 @@
+model:
+  base_learning_rate: 2.0e-06
+  target: ldm.models.diffusion.ddpm.LatentDiffusion
+  params:
+    linear_start: 0.0015
+    linear_end: 0.0195
+    num_timesteps_cond: 1
+    log_every_t: 200
+    timesteps: 1000
+    first_stage_key: image
+    cond_stage_key: class_label
+    image_size: 64
+    channels: 3
+    cond_stage_trainable: false
+    concat_mode: false
+    monitor: val/loss
+    
+    # Load Pre-trained LDM Weights
+    ckpt_path: /home/tm/img-science/github/latent-diffusion/models/ldm/ffhq256/model.ckpt
+
+    unet_config:
+      target: ldm.modules.diffusionmodules.openaimodel.UNetModel
+      params:
+        image_size: 64
+        in_channels: 3
+        out_channels: 3
+        model_channels: 224
+        attention_resolutions:
+        - 8
+        - 4
+        - 2
+        num_res_blocks: 2
+        channel_mult:
+        - 1
+        - 2
+        - 3
+        - 4
+        num_head_channels: 32
+
+    first_stage_config:
+      target: ldm.models.autoencoder.VQModelInterface
+      params:
+        ckpt_path: /home/tm/img-science/github/latent-diffusion/models/first_stage_models/vq-f4/model.ckpt
+        embed_dim: 3
+        n_embed: 8192
+        ddconfig:
+          double_z: false
+          z_channels: 3
+          resolution: 256
+          in_channels: 3
+          out_ch: 3
+          ch: 128
+          ch_mult:
+          - 1
+          - 2
+          - 4
+          num_res_blocks: 2
+          attn_resolutions: []
+          dropout: 0.0
+        lossconfig:
+          target: torch.nn.Identity
+          
+    cond_stage_config: __is_unconditional__
+
+data:
+  target: main.DataModuleFromConfig
+  params:
+    batch_size: 1 # Reduced to 1 for debugging OOM
+    num_workers: 2
+    wrap: false
+    train:
+      target: ldm.data.ffhq_survey.FFHQSurveyTrain
+      params:
+        size: 256
+        sex: "male"
+    validation:
+      target: ldm.data.ffhq_survey.FFHQSurveyValidation
+      params:
+        size: 256
+        sex: "male"
+
+lightning:
+  callbacks:
+    image_logger:
+      target: main.ImageLogger
+      params:
+        batch_frequency: 500
+        max_images: 8
+        increase_log_steps: False
+
+  trainer:
+    benchmark: True
+    max_epochs: 200
